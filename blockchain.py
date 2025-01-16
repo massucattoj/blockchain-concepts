@@ -3,8 +3,9 @@ import hashlib
 import json
 from flask import Flask, jsonify
 
-
-# Building a Blockchain
+'''
+Building a Blockchain
+'''
 class Blockchain: 
     def __init__(self):
         self.chain = []
@@ -14,7 +15,7 @@ class Blockchain:
 
         # create a dict for the block
         block = {
-            'index': len(self.chain + 1),
+            'index': len(self.chain) + 1,
             'timestamp': str(datetime.datetime.now()),
             'proof': proof,
             'previous_hash': previous_hash,
@@ -75,4 +76,47 @@ class Blockchain:
         return True
 
 
-# Mining our Blockchain
+'''
+Mining our Blockchain
+'''
+
+# 1. Create an web app
+app = Flask(__name__)
+
+# 2. Creating the blockchain
+blockchain = Blockchain()
+
+
+@app.route('/mine_block', methods=['GET'])
+def mine_block():
+    # mine a block = solve the proof of work
+    previous_block = blockchain.get_previous_block()
+    previous_proof = previous_block['proof']
+
+    proof = blockchain.proof_of_work(previous_proof)
+    previous_hash = blockchain.hash(previous_block)
+
+    block = blockchain.create_block(proof, previous_hash)
+
+    response = {
+        'message': 'Congratulations, you just mined a block!', 
+        'index': block['index'],
+        'timestamp': block['timestamp'],
+        'proof': block['proof'],
+        'previous_hash': block['previous_hash']
+    }
+
+    return jsonify(response), 201
+
+@app.route('/get_chain', methods=['GET'])
+def get_chain():
+    response = {
+        'chain': blockchain.chain,
+        'length': len(blockchain.chain)
+    }
+
+    return jsonify(response), 200
+
+
+# running app
+app.run(host= '0.0.0.0', port= 5001)
